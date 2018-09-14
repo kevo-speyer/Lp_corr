@@ -14,14 +14,19 @@ def main(): # main_script
     # Read data and do data analysis
     R_abs = get_norm_R_next(n_liq, n_mon, n_chain, frame_tot, Lx, Ly)
     corr = get_corr_Rnext(n_liq, n_mon, n_chain, frame_tot, Lx, Ly)
-    
+	
+    # Get contour length of the polymer
+    l_c = np.sum(R_abs)   
+     
     # Estimate persistence length (l_p), from correlations of r_next vectors
     l_p = -1/np.log(corr[1])
-
+    
+    #Get persistence length as a fraction of chain length
+    lp_lc = l_p / l_c
     # Output data
     save_data(corr,'mean_Rnext_corr.mide')
     save_data(R_abs,'mean_abs_Rnext.mide')
-    save_data(np.array(l_p),'mean_lp.mide')
+    save_data(np.array(lp_lc),'mean_lp.mide')
 
 ################### END MAIN PROGRAM ######################
 
@@ -208,7 +213,7 @@ def save_data(data, string):
 
             s += str('\n')
             f.write(s)
- 
+    f.write('\n') 
     f.close()
  
 def PBC_corr(R_next, Lx, Ly):
@@ -239,6 +244,26 @@ def read_params():
     This script reads Lx, Ly, Lz, n_frames, nm, n_brush, delta_t from system_input and mfa_input
     """
     import numpy as np
+    import os.path
+    import sys
+    import gzip
+
+    fl='film_xmol'
+    if os.path.isfile( fl+str('.gz') ) and ( not os.path.isfile(fl) ):
+        inF = gzip.GzipFile(fl+str('.gz'), 'rb')
+        s = inF.read()
+        inF.close()
+        
+        outF = file(fl, 'wb')
+        outF.write(s)
+        outF.close()
+
+    #Check if necessary files are present
+    for fl in ["mfa_input","conf_old","film_xmol"]:
+        if not os.path.isfile(fl):
+            print "ERROR: File '",fl,"' missing, aborting run!"
+            sys.exit()
+
 
     j=0
     with open('mfa_input') as f:
